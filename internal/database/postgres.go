@@ -32,3 +32,7 @@ func Connect(cfg *config.Config) (*sql.DB, error){
 	case <- time.After(2*time.Second):
 	}
 }
+//configure connection pool settings for optimal performance
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
