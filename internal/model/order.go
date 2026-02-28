@@ -29,5 +29,6 @@ func NewPayment(userID string,amount float64,currency string,idempotencykey stri
 		Currency: currency,
 		Status: StatusPending,
 		IdempotencyKey: idempotencykey,
+		CreatedAt: time.Now(),
 }
 }
