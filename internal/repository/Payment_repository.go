@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"STRIPE/internal/model"
 )
@@ -38,11 +39,34 @@ func (r *PaymentRepository) Create(ctx context.Context, p *model.Payment) error 
 	}
 	return nil
 }
-//helper function to check for unique constraint violation on idempotency key
+
+func (r *PaymentRepository) GetByIdempotencyKey(ctx context.Context, key string) (*model.Payment, error) {
+	query := `SELECT id, user_id, amount, currency, status, idempotency_key, created_at
+			  FROM payments
+			  WHERE idempotency_key = $1;`
+
+    row := r.db.QueryRowContext(ctx,query,key)
+	var p model.Payment
+	err := row.Scan(
+		&p.ID,
+		&p.UserID,
+		&p.Amount,
+		&p.Currency,
+		&p.Status,
+		&p.IdempotencyKey,
+		&p.CreatedAt,
+	)
+	if err != nil{
+		if err == sql.ErrNoRows {
+			return nil, nil // No payment found with the given idempotency key
+		}
+		return nil, err // something went wrong with the query or like db connection
+	}
+	return &p, nil // Payment found, return it
+}
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
-	return contains(err.Error(), "duplicate key")
+	return strings.Contains(err.Error(), "duplicate key")
 }
-
