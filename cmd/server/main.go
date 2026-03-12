@@ -20,4 +20,14 @@ func main(){
 	if err != nil{
 		log.Fatalf("failed to load config: %v", err)
 	}
+	db, err := database.Connect(cfg)
+	if err != nil {
+		log.Fatalf("database connection failed: %v", err)
+	}
+	paymentRepo := repository.NewPaymentRepository(db)
+	paymentService := service.NewPaymentService(paymentRepo)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
 }
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/payments", paymentHandler.CreatePayment)
