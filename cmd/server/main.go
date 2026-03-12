@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"STRIPE/internal/middleware"
 	"STRIPE/internal/config"
 	"STRIPE/internal/database"
 	"STRIPE/internal/handler"
@@ -32,7 +33,13 @@ func main(){
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/payments", paymentHandler.CreatePayment)
+	var handler http.Handler = http.HandlerFunc(paymentHandler.CreatePayment)
+
+		handler = middleware.APIKeyAuth(handler)
+		handler = middleware.Logging(handler)
+		handler = middleware.Recovery(handler)
+
+		mux.Handle("/payments", handler)
 		server := &http.Server{
 		Addr:         ":" + strconv.Itoa(cfg.ServerPort),
 		Handler:      mux,
