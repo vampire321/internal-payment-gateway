@@ -20,7 +20,7 @@ type PaymentHandler struct {
 func NewPaymentHandler(s *service.PaymentService) *PaymentHandler {
 	return &PaymentHandler{Service : s}
 }
-func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r http.Request){
+func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r *http.Request){
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed,"method_not_allowed","Only Post allowed")
 		return

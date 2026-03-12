@@ -15,7 +15,7 @@ type Config struct {
 	ServerPort int
 }
 //load and validate configuration from environment variables
-func load() (*Config , error){
+func Load() (*Config , error){
 	dbportstr := getEnv("DB_PORT","5432")
 	dbPort ,err := strconv.Atoi(dbportstr)
 	if err != nil {
