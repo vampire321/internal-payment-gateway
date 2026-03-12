@@ -48,8 +48,8 @@ func main(){
 	}()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-	log.Println("shutting down server...")
+	<-stop //this pauses entire program and waits for POST channel 
+	log.Println("shutting down server....")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
