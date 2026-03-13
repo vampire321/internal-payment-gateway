@@ -1,5 +1,6 @@
 package handler
 import (
+	"errors"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -8,10 +9,11 @@ import (
 )
 //this represnt client input
 type CreatePaymentRequest struct {
-	UserID string
-	Amount float64
-	currency string
+	UserID string `json:"user_id"`
+	Amount float64 `json:"amount"`
+	Currency string `json:"currency"`
 }
+
 
 type PaymentHandler struct {
 	Service *service.PaymentService
@@ -20,6 +22,27 @@ type PaymentHandler struct {
 func NewPaymentHandler(s *service.PaymentService) *PaymentHandler {
 	return &PaymentHandler{Service : s}
 }
+
+func (r *CreatePaymentRequest) Validate() error {
+
+	if r.UserID == "" {
+		return errors.New("user_id is required")
+	}
+
+	if r.Amount <= 0 {
+		return errors.New("amount must be greater than zero")
+	}
+
+	if r.Currency == "" {
+		return errors.New("currency is required")
+	}
+
+	if len(r.Currency) != 3 {
+		return errors.New("currency must be 3 characters")
+	}
+
+	return nil
+}
 func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r *http.Request){
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed,"method_not_allowed","Only Post allowed")
@@ -27,7 +50,11 @@ func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r *http.Request){
 }
 	idempotencyKey := r.Header.Get("idempotency-Key")
 	//payment system requires this
-	var req CreatePaymentRequest 
+	var req CreatePaymentRequest
+	if idempotencyKey == "" {
+	writeError(w, http.StatusBadRequest, "missing_idempotency_key", "Idempotency-Key header required")
+	return
+}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil{
 		writeError(w,http.StatusBadRequest,"invalid_json","malformed JSON body")
 		return
@@ -40,7 +67,7 @@ func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r *http.Request){
 		ctx,
 		req.UserID,
 		req.Amount,
-		req.currency,
+		req.Currency,
 		idempotencyKey,
 	)
 	if err != nil{
@@ -57,9 +84,9 @@ func (h *PaymentHandler) CreatePayment(w http.ResponseWriter , r *http.Request){
 	w.WriteHeader(status)
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error": map[string]string{
-			"code":    code,
-			"message": message,
+		"error":map[string]string{
+			"code":code,
+			"message":message,
 		},
 	})
 }
